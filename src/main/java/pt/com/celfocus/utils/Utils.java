@@ -11,7 +11,7 @@ import java.util.Properties;
 public class Utils {
 
 	public static Map<String, String> argsToMap(String[] args) throws Exception {
-		final Map<String, String> params = new HashMap<>();
+		final Map<String, String> params = new HashMap<String, String>();
 		try {
 			
 			if(args.toString().contains("help")) Help.showHelp();

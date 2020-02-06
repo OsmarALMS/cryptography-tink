@@ -68,7 +68,7 @@ public class Main {
 		encryptingChannel.close();
 		in.close();
 
-		//Generage MetaFile
+		//Generate MetaFile
 		FileWriter metaFile = new FileWriter(params.get("meta") != null ? params.get("meta") : (params.get("in")+".meta"));
 		metaFile.write(new Gson().toJson(new Meta(params.get("aad") != null ? params.get("aad") : properties.getProperty("aad"))));
 		metaFile.close();
@@ -76,18 +76,18 @@ public class Main {
 	}
 
 	public static void decrypt(StreamingAead streamingAead, Map<String, String> params, Properties properties) throws Exception {
-
+		
 		@SuppressWarnings("resource")
-		ReadableByteChannel fileInputStream = new FileOutputStream(new File(params.get("in"))).getChannel();
-
+		FileChannel ciphertextSource = new FileInputStream(params.get("in")).getChannel();
+		
 		ReadableByteChannel decryptingChannel = streamingAead.newDecryptingChannel(
-				fileInputStream, 
+				ciphertextSource, 
 				params.get("aad") != null ? params.get("aad").getBytes() : properties.getProperty("aad").getBytes());
-
+		
+		ByteBuffer buffer = ByteBuffer.allocate(8192);
 		OutputStream out = new FileOutputStream(
 				new File(params.get("out") != null ? params.get("out") : (params.get("in")+".dec")));
-
-		ByteBuffer buffer = ByteBuffer.allocate(8192);
+		
 		int cnt = 1;
 		do {
 			buffer.clear();
@@ -95,8 +95,8 @@ public class Main {
 			out.write(buffer.array());
 		} while (cnt > 0);
 		
-		decryptingChannel.close();
 		out.close();
+		decryptingChannel.close();
 	}
 
 	public static KeysetHandle getKeysetHandle(Map<String, String> params, Properties properties) throws Exception {
@@ -105,7 +105,7 @@ public class Main {
 
 		KeysetHandle keysetHandle = null;
 
-		if(params.get("genkey").equals("true")) {
+		if(params.get("genkey").equals("true") && params.get("decrypt").equals("false")) {
 
 			keysetHandle = KeysetHandle.generateNew(StreamingAeadKeyTemplates.AES256_GCM_HKDF_4KB);
 
@@ -116,19 +116,19 @@ public class Main {
 						new GcpKmsClient().withDefaultCredentials().getAead(properties.getProperty("gcp-kms")));
 			}
 
-		}else if(params.get("genkey").equals("false")) {
+		}else if(params.get("genkey").equals("false") || params.get("decrypt").equals("true")) {
 
 			if(params.get("key") == null) {
-				System.err.println("If -genkey=false -key param must by declared!");
+				System.err.println("If (-genkey=false || -decrypt=true) -key param must by declared!");
 				System.exit(1);
 			}
-			
+
 			if(params.get("kms").equals("false")) {
 				keysetHandle = CleartextKeysetHandle.read(JsonKeysetReader.withFile(new File(keysetFilename)));
 			}else if(params.get("kms").equals("true")) {
 				keysetHandle = KeysetHandle.read(
-				        JsonKeysetReader.withFile(new File(keysetFilename)),
-				        new GcpKmsClient().getAead(properties.getProperty("gcp-kms")));
+						JsonKeysetReader.withFile(new File(keysetFilename)),
+						new GcpKmsClient().getAead(properties.getProperty("gcp-kms")));
 			}
 		}
 		return keysetHandle;
