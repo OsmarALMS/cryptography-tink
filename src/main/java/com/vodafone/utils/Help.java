@@ -1,4 +1,4 @@
-package pt.com.celfocus.utils;
+package com.vodafone.utils;
 
 public class Help {
 
@@ -9,8 +9,6 @@ public class Help {
 		System.out.println("	-in 		[/input/file1.txt]			REQUIRED");
 		System.out.println("	-out		[/output/file1.txt.enc]			OPTIONAL	default: [in].enc");
 		System.out.println("	-meta		[/meta/file1.txt.meta]			OPTIONAL	default: [in].meta");
-		System.out.println("	-genkey		[true/false]				OPTIONAL	default: [true]");
-		System.out.println("	-key		[/key/file1.txt.key]			OPTIONAL	default: [in].key");
 		System.out.println("	-p		[/properties/file1.properties]		OPTIONAL	cryptography.properties");
 		System.out.println("	-aad		[aad]					OPTIONAL	default (.properties [aad])");
 		System.out.println("	-decrypt	[true/false]				OPTIONAL	default: [false]");

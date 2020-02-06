@@ -1,4 +1,4 @@
-package pt.com.celfocus.utils;
+package com.vodafone.utils;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;

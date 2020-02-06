@@ -61,7 +61,7 @@
               				<transformers>
                 				<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                 				<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                 					<mainClass>pt.com.celfocus.Main</mainClass>
+                 					<mainClass>com.vodafone.Main</mainClass>
                 				</transformer>
               				</transformers>
             			</configuration>
