@@ -89,7 +89,7 @@ public class Main {
 		FileChannel ciphertextSource = new FileInputStream(params.get("in")).getChannel();
 
 		JSONObject jsonMetadata = getMetadataJson(params);
-		
+
 		ReadableByteChannel decryptingChannel = streamingAead.newDecryptingChannel(
 				ciphertextSource, 
 				Base64.getDecoder().decode(jsonMetadata.get("aad").toString()));
@@ -100,9 +100,11 @@ public class Main {
 
 		int cnt = 1;
 		do {
-			buffer.clear();
-			cnt = decryptingChannel.read(buffer);
-			out.write(buffer.array());
+			if(cnt > 0) {
+				buffer.clear();
+				cnt = decryptingChannel.read(buffer);
+				out.write(buffer.array());
+			}
 		} while (cnt > 0);
 
 		out.close();
@@ -133,7 +135,7 @@ public class Main {
 			}else if(params.get("kms").equals("true")) {
 				keysetHandle = KeysetHandle.read(
 						JsonKeysetReader.withString(jsonMetadata.get("keyset").toString()),
-						new GcpKmsClient().getAead(jsonMetadata.get("kms").toString()));
+						new GcpKmsClient().withDefaultCredentials().getAead(jsonMetadata.get("kms").toString()));
 			}
 		}
 		return keysetHandle;
