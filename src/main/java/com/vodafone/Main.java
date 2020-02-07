@@ -75,7 +75,7 @@ public class Main {
 		//Generate Metadata
 		FileWriter metaFile = new FileWriter(params.get("meta") != null ? params.get("meta") : (params.get("in")+".enc.metadata"));
 		JSONObject obj = new JSONObject()
-				.put("kms",properties.getProperty("gcp-kms"))
+				.put("kms",properties.getProperty("kms"))
 				.put("aad", Base64.getEncoder().encodeToString(
 						params.get("aad") != null ? params.get("aad").getBytes() : properties.getProperty("aad").getBytes()))
 				.put("keyset", new JSONObject(bosKey.toString("UTF-8")));
@@ -88,13 +88,15 @@ public class Main {
 		@SuppressWarnings("resource")
 		FileChannel ciphertextSource = new FileInputStream(params.get("in")).getChannel();
 
+		JSONObject jsonMetadata = getMetadataJson(params);
+		
 		ReadableByteChannel decryptingChannel = streamingAead.newDecryptingChannel(
 				ciphertextSource, 
-				params.get("aad") != null ? params.get("aad").getBytes() : properties.getProperty("aad").getBytes());
+				Base64.getDecoder().decode(jsonMetadata.get("aad").toString()));
 
 		ByteBuffer buffer = ByteBuffer.allocate(8192);
 		OutputStream out = new FileOutputStream(
-				new File(params.get("out") != null ? params.get("out") : (params.get("in")+".dec")));
+				new File(params.get("out") != null ? params.get("out") : (params.get("in").replace(".enc", ".dec"))));
 
 		int cnt = 1;
 		do {
@@ -119,24 +121,28 @@ public class Main {
 				CleartextKeysetHandle.write(keysetHandle, JsonKeysetWriter.withOutputStream(bos));
 			}else if(params.get("kms").equals("true")) {
 				keysetHandle.write(JsonKeysetWriter.withOutputStream(bos),
-						new GcpKmsClient().withDefaultCredentials().getAead(properties.getProperty("gcp-kms")));
+						new GcpKmsClient().withDefaultCredentials().getAead(properties.getProperty("kms")));
 			}
 
 		}else if(params.get("decrypt").equals("true")) {
 
-			String keysetFilename = params.get("meta") != null ? params.get("meta") : (params.get("in")+".metadata");
-			String content = FileUtils.readFileToString(new File(keysetFilename), StandardCharsets.UTF_8);
-			JSONObject json = new JSONObject(content);
-			
+			JSONObject jsonMetadata = getMetadataJson(params);
+
 			if(params.get("kms").equals("false")) {
-				keysetHandle = CleartextKeysetHandle.read(JsonKeysetReader.withString(json.get("keyset").toString()));
+				keysetHandle = CleartextKeysetHandle.read(JsonKeysetReader.withString(jsonMetadata.get("keyset").toString()));
 			}else if(params.get("kms").equals("true")) {
 				keysetHandle = KeysetHandle.read(
-						JsonKeysetReader.withString(json.get("keyset").toString()),
-						new GcpKmsClient().getAead(properties.getProperty("gcp-kms")));
+						JsonKeysetReader.withString(jsonMetadata.get("keyset").toString()),
+						new GcpKmsClient().getAead(jsonMetadata.get("kms").toString()));
 			}
 		}
 		return keysetHandle;
+	}
+
+	public static JSONObject getMetadataJson(Map<String, String> params) throws Exception {
+		String keysetFilename = params.get("meta") != null ? params.get("meta") : (params.get("in")+".metadata");
+		String content = FileUtils.readFileToString(new File(keysetFilename), StandardCharsets.UTF_8);
+		return new JSONObject(content);
 	}
 
 }

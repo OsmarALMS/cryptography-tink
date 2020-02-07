@@ -26,7 +26,7 @@ public class Utils {
 			if(params.get("in") == null) Help.showHelp();
 			if(params.get("genkey") == null) params.put("genkey", "true");
 			if(params.get("decrypt") == null) params.put("decrypt", "false");
-			if(params.get("kms") == null) params.put("dekmscrypt", "true");
+			if(params.get("kms") == null) params.put("kms", "true");
 			
 		} catch (IndexOutOfBoundsException e) {
 			System.out.println("Invalid Usage!");
